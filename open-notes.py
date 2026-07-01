@@ -36,7 +36,7 @@ def call_llm(api_route, payload):
 def save_note(cleaned_note):
     dir_path = Path("open-notes/notes")
     dir_path.mkdir(parents=True, exist_ok=True)
-    time_stamp = datetime.now().strftime("%Y/%m/%d_%H:%M:%S")
+    time_stamp = datetime.now().strftime("%Y_%m_%d_%H:%M:%S")
     file_name = f"{time_stamp}.md"
     file_path = os.path.join(dir_path, file_name)
 
