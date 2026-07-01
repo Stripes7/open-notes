@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 import os
 import requests
+from pathlib import Path
+from datetime import datetime
 
 def load_config():
 
@@ -31,10 +33,25 @@ def call_llm(api_route, payload):
 
     return response, data
 
+def save_note(cleaned_note):
+    dir_path = Path("open-notes/notes")
+    dir_path.mkdir(parents=True, exist_ok=True)
+    time_stamp = datetime.now().strftime("%Y/%m/%d_%H:%M:%S")
+    file_name = f"{time_stamp}.md"
+    file_path = os.path.join(dir_path, file_name)
+
+    print(file_path)
+
+    with open(file_path, "w") as file:
+        file.write(cleaned_note)
+
 def print_response(response, data):
 
     if response.status_code == 200:
-        print(data["response"])
+        note = data["response"]
+        print(note)
+
+    return note
 
 def main():
 
@@ -42,7 +59,8 @@ def main():
     user_question = get_user_input()
     payload = build_payload(model, user_question)
     response, data = call_llm(api_route, payload)
-    print_response(response, data)
+    note = print_response(response, data)
+    save_note(note)
 
 if __name__ == "__main__":
     main()
