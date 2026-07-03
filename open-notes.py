@@ -4,11 +4,14 @@ import requests
 from pathlib import Path
 from datetime import datetime
 
-# TO DO's
+################################# TO DO's ###############################################################################################
 # Add docstrings to each function
 # Create a generate timestamp function to be used in save notes and load notes (or maybe just create file?) or two separate functions
+# User question needs to change to user_input or something more generic since it won't always be a question, could be a directive
+#########################################################################################################################################
 
 def load_config():
+
     # Get env variables
     load_dotenv()
     api_route = os.getenv("API_ROUTE")
