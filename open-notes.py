@@ -3,7 +3,17 @@ import os
 import requests
 from pathlib import Path
 from datetime import datetime
+import argparse
 
+# Setup the argument parser
+def parse_args():
+    parser = argparse.ArgumentParser(description="Parses the arguments passed through the CLI")
+    parser.add_argument("-a", "--ask")
+    args = parser.parse_args()
+
+    if args.ask:
+        return True
+    return args
 
 def load_config():
     """Loads dotenv variables and creates required directories if they don't already exist."""
@@ -104,6 +114,10 @@ def save_note(new_note, notes_path, notes_repo_file_path, time_stamp):
     print(f"""
           Note saved successfully as {file_name}.
           Note copied to repo file at file path: {notes_repo_file_path} and saved successfully.""")
+
+
+def ask_notes():
+    """Enables the user to ask a question with their Notes_Repo as the context for the LLM to use for it's reply"""
 
 
 def main():
