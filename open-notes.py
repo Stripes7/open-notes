@@ -7,12 +7,10 @@ import argparse
 
 # Setup the argument parser
 def parse_args():
+    """Adds arguments to the CLI - currently only supports -a for indicating the user wants to ask the LLM to use their notes as the context for the question."""
     parser = argparse.ArgumentParser(description="Parses the arguments passed through the CLI")
     parser.add_argument("-a", "--ask")
     args = parser.parse_args()
-
-    if args.ask:
-        return True
     return args
 
 def load_config():
@@ -40,20 +38,46 @@ def load_config():
 
 def get_user_input():
     """Gets user input to be sent to the model."""
+    # Will check for arguments here and branch based on whether or not the input was to store a note or retrieve a note
 
     user_question = input("User Input: ")
 
     return user_question
 
 
-def build_payload(model, user_question, stream=False):
+def build_payload(model, user_question, isNote, notes_repo_file_path, stream=False) :
     """Builds the payload to be sent to the model."""
 
-    payload = {
-        "model": model,
-        "prompt": user_question,
-        "stream": stream
-    }
+    if isNote:
+        payload = {
+            "model": model,
+            "prompt": user_question,
+            "stream": stream
+            }
+        
+### Consider factoring this part out into its own function - build_context()
+    else:
+        notes_context = notes_repo_file_path.read_text()
+        prompt = (f"""
+
+You are answering questions using only the notes below.
+                        
+If the answer is not in the notes, say you don't know based on the saved notes.
+
+Notes:
+{notes_context}
+
+Question:
+{user_question}
+
+""")
+
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "stream": stream
+        }
+        
     return payload
 
 
@@ -118,12 +142,23 @@ def save_note(new_note, notes_path, notes_repo_file_path, time_stamp):
 
 def ask_notes():
     """Enables the user to ask a question with their Notes_Repo as the context for the LLM to use for it's reply"""
+    ### Convert the notes_repo to  a string
+
+
 
 
 def main():
+    arguments = parse_args()
+
+    if arguments.ask is None:
+        isNote = True
+
+    else:
+        isNote = False
+
     api_route, model, notes_path, notes_repo_file_path = load_config()
     user_question = get_user_input()
-    payload = build_payload(model, user_question)
+    payload = build_payload(model, user_question, isNote, notes_repo_file_path)
     data = call_llm(api_route, payload)
 
     if data is None:
