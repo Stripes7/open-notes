@@ -9,7 +9,8 @@ import argparse
 def parse_args():
     """Adds arguments to the CLI - currently only supports -a for indicating the user wants to ask the LLM to use their notes as the context for the question."""
     parser = argparse.ArgumentParser(description="Parses the arguments passed through the CLI")
-    parser.add_argument("-a", "--ask")
+    parser.add_argument("-r", "--read")
+    parser.add_argument("-w", "--write")
     args = parser.parse_args()
     return args
 
@@ -36,29 +37,11 @@ def load_config():
     return api_route, model, notes_path, notes_repo_file_path
 
 
-def get_user_input():
-    """Gets user input to be sent to the model."""
-    # Will check for arguments here and branch based on whether or not the input was to store a note or retrieve a note
+def build_context(notes_repo_file_path, user_input):
+    """Builds the payload creating a prompt which uses the note_repo as the context for the LLM to use."""
 
-    user_question = input("User Input: ")
-
-    return user_question
-
-
-def build_payload(model, user_question, isNote, notes_repo_file_path, stream=False) :
-    """Builds the payload to be sent to the model."""
-
-    if isNote:
-        payload = {
-            "model": model,
-            "prompt": user_question,
-            "stream": stream
-            }
-        
-### Consider factoring this part out into its own function - build_context()
-    else:
-        notes_context = notes_repo_file_path.read_text()
-        prompt = (f"""
+    notes_context = notes_repo_file_path.read_text()
+    prompt = (f"""
 
 You are answering questions using only the notes below.
                         
@@ -68,13 +51,29 @@ Notes:
 {notes_context}
 
 Question:
-{user_question}
+{user_input}
 
 """)
+    
+    return prompt
 
+
+def build_payload(model, user_input, isNote, notes_repo_file_path, stream=False) :
+    """Builds the payload to be sent to the model."""
+
+    # Is a note to be saved - Prompts the LLM with the user input only
+    if isNote:
         payload = {
             "model": model,
-            "prompt": prompt,
+            "prompt": user_input,
+            "stream": stream
+            }
+        
+    # Is not a note to be saved - Prompts the LLM with the user input and adds context to only use the notes_repo as it's source
+    else:
+        payload = {
+            "model": model,
+            "prompt": build_context(notes_repo_file_path, user_input),
             "stream": stream
         }
         
@@ -103,7 +102,7 @@ def print_response(data):
     return llm_response
 
 
-def create_note(question, llm_response):
+def create_note(user_input, llm_response):
     """Creates a string using the user input and llm response to be later converted in a note."""
 
     time_stamp = datetime.now().strftime("%Y_%m_%d %H-%M-%S")
@@ -111,7 +110,7 @@ def create_note(question, llm_response):
 
 ### User Input
 
-{question}
+{user_input}
 
 ### LLM Output
 
@@ -140,33 +139,33 @@ def save_note(new_note, notes_path, notes_repo_file_path, time_stamp):
           Note copied to repo file at file path: {notes_repo_file_path} and saved successfully.""")
 
 
-def ask_notes():
-    """Enables the user to ask a question with their Notes_Repo as the context for the LLM to use for it's reply"""
-    ### Convert the notes_repo to  a string
-
-
-
-
 def main():
     arguments = parse_args()
 
-    if arguments.ask is None:
+    # Checking if the user indicated the input is a note
+    if arguments.write is not None:
         isNote = True
+        user_input = arguments.write
+
+    elif arguments.read is not None:
+        isNote = False
+        user_input = arguments.read
 
     else:
-        isNote = False
+        return print("ERROR: Missing argument.")
 
     api_route, model, notes_path, notes_repo_file_path = load_config()
-    user_question = get_user_input()
-    payload = build_payload(model, user_question, isNote, notes_repo_file_path)
+    payload = build_payload(model, user_input, isNote, notes_repo_file_path)
     data = call_llm(api_route, payload)
 
     if data is None:
         return
 
     llm_response = print_response(data)
-    new_note, time_stamp = create_note(user_question, llm_response)
-    save_note(new_note, notes_path, notes_repo_file_path, time_stamp)
+
+    if isNote:
+        new_note, time_stamp = create_note(user_input, llm_response)
+        save_note(new_note, notes_path, notes_repo_file_path, time_stamp)
    
 if __name__ == "__main__":
     main()

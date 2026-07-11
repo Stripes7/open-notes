@@ -18,7 +18,7 @@
 
 ## Running the application
 ---
-### Placeholder
+### Application runs from the CLI and requires either the -r (--read) argument or the -w (--write) argument. -r will use the notes_repository as it's context for the generated output. -w will use the models full context for the generated output. -w will also save the input and response as a unique note file with the input, response, and timestamp. -w will also save the input and response into the notes_repo to be used for future -r context builds.
 
 ## Project Structure
 ---
