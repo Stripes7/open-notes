@@ -1,5 +1,6 @@
-## Open Notes
+## DORIS
 ---
+### Digital Organized Recall & Intelligence System
 ### A notes application that interfaces with an LLM for storage and retrieval of notes.
 
 ## Current Features
@@ -26,7 +27,9 @@
 
 ## Planned Features
 ---
-### Placeholder
+### Text Based UI
+### GUI
+### Per Session context for conversational interactions
 
 ## License
 ---
